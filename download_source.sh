@@ -48,3 +48,7 @@ else
     echo "Downloading root filesystem..."
     wget $ROOTFS_URL -O buildroot-$ROOTFS_VERSION.tar.gz
 fi
+
+# Download CPSS source
+echo "Please download the CPSS source manually from the official website."
+echo "Download CPSS-4.3.17_015_Source_Git.tar and place it in the 'source' directory."
