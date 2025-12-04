@@ -35,13 +35,7 @@ Create the Docker image used for building the kernel and rootfs.
 
 ### 3. Build Kernel & Rootfs
 
-Enter the Docker container to perform the build.
-
-```bash
-./run_docker.sh
-```
-
-Inside the container, run the build scripts:
+Build scripts will automatically run inside Docker if not already in the container:
 
 ```bash
 # Build the Linux Kernel
@@ -51,17 +45,21 @@ Inside the container, run the build scripts:
 ./build_rootfs.sh
 ```
 
-The build artifacts will be located in the `build/` directory:
+> **Note**: The scripts automatically detect if they're running outside Docker and will re-launch themselves inside the container. You can also manually enter the container with `./run_docker.sh` if needed.
+
+The build artifacts
 *   Kernel: `build/bzImage`
 *   Rootfs: `build/buildroot/output/images/rootfs.cpio` (or similar, depending on config)
 
 ### 4. Package Image & Generate GNS3 Appliance
 
-Package the built kernel and rootfs into a bootable QCOW2 image and generate a GNS3 appliance file.
+Package the built kernel and rootfs into a bootable QCOW2 image and generate a GNS3 appliance file:
 
 ```bash
-sudo ./package_image.sh
+./package_image.sh
 ```
+
+> **Note**: This script automatically runs with root privileges inside Docker when needed for operations like `losetup` and `mount`.
 
 This will create:
 *   **Disk Image**: `build/gns3_base.qcow2`

@@ -1,6 +1,18 @@
 #!/bin/bash
 set -e
 
+# Check if running inside Docker container
+if [ ! -f /.dockerenv ]; then
+    echo "Not running in Docker. Re-launching inside Docker container..."
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    # Use absolute path for the script to ensure it runs correctly inside the container
+    # since PWD is mounted to the same path.
+    SCRIPT_ABS_PATH="$(cd "$(dirname "$0")"; pwd)/$(basename "$0")"
+    # This script requires root privileges inside the container
+    export RUN_AS_ROOT=true
+    exec "$SCRIPT_DIR/run_docker.sh" "$SCRIPT_ABS_PATH" "$@"
+fi
+
 # Script to package Kernel and Rootfs into a bootable QCOW2 image
 # Requires: qemu-img, extlinux (syslinux), losetup, fdisk, mkfs.ext4
 

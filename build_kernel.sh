@@ -3,6 +3,16 @@
 # Build script for GNS3 base image
 # Includes steps to build Linux kernel
 
+# Check if running inside Docker container
+if [ ! -f /.dockerenv ]; then
+    echo "Not running in Docker. Re-launching inside Docker container..."
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    # Use absolute path for the script to ensure it runs correctly inside the container
+    # since PWD is mounted to the same path.
+    SCRIPT_ABS_PATH="$(cd "$(dirname "$0")"; pwd)/$(basename "$0")"
+    exec "$SCRIPT_DIR/run_docker.sh" "$SCRIPT_ABS_PATH" "$@"
+fi
+
 # Create build directory
 BUILD_DIR="./build"
 mkdir -p $BUILD_DIR
