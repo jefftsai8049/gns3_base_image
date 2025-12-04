@@ -62,10 +62,18 @@ sed -i 's/BR2_LINUX_KERNEL=y/# BR2_LINUX_KERNEL is not set/g' .config
 echo "Applying configuration for Kernel 4.4.x..."
 cat >> .config <<END_CONFIG
 BR2_KERNEL_HEADERS_4_4=y
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_TARGET_ROOTFS_CPIO=y
 BR2_TARGET_ROOTFS_EXT2=y
+BR2_TARGET_ROOTFS_EXT2_SIZE="300M"
 BR2_TARGET_GENERIC_GETTY_PORT="ttyS0"
 BR2_TARGET_GENERIC_GETTY_BAUDRATE_115200=y
+BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
+BR2_PACKAGE_BASH=y
+BR2_SYSTEM_BIN_SH_BASH=y
+BR2_PACKAGE_TCPDUMP=y
+BR2_PACKAGE_LIBPCAP=y
+BR2_PACKAGE_BRIDGE_UTILS=y
 END_CONFIG
 
 # Update configuration
@@ -78,5 +86,8 @@ echo "Building Buildroot..."
 # echo "Patching host-fakeroot..."
 # make host-fakeroot-extract
 # find output/build/host-fakeroot-1.20.2 -name "libfakeroot.c" -exec sed -i '1i #ifndef _STAT_VER\n#define _STAT_VER 0\n#endif' {} +
+
+# Clean previous build artifacts but keep downloaded files
+# make -j$(nproc) clean
 
 make -j$(nproc)

@@ -44,9 +44,31 @@ cd linux-*/
 pwd
 # Build Linux kernel
 make defconfig
+
+# Enable TUN/TAP, Bridge, and other required features for CPSS
+echo "Enabling TUN/TAP, Bridge support for CPSS..."
+cat >> .config <<END_CONFIG
+# Network support for GNS3
+CONFIG_TUN=y
+CONFIG_BRIDGE=y
+CONFIG_VLAN_8021Q=y
+CONFIG_STP=y
+CONFIG_BRIDGE_IGMP_SNOOPING=y
+CONFIG_LLC=y
+END_CONFIG
+
+# Update config
+make olddefconfig
+
+echo "Building kernel with $(nproc) parallel jobs..."
 make -j$(nproc)
+
 # Copy the built kernel to the build directory
+echo "Copying built kernel..."
 cp arch/x86/boot/bzImage ../bzImage
 
-# # Optional: Test boot with QEMU
-# qemu-system-x86_64 -kernel ../bzImage -append "console=ttyS0" -nographic
+echo ""
+echo "=========================================="
+echo "Kernel build complete!"
+echo "Output: build/linux/bzImage"
+echo "=========================================="
