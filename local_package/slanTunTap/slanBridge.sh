@@ -1,9 +1,11 @@
 #!/bin/bash
 slanConnector -D
-for i in {0..7}
+for i in {0..27}
 do
-    slanTunTapLinux -D -n slan0$i
+    ID=$(printf "%02d" $i)
+    slanTunTapLinux -D -n slan$ID
     ifconfig tap$i up
+    ifconfig eth$i up
 
     ip link add name br$i type bridge
     ip link set dev br$i up
