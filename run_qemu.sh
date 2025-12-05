@@ -1,33 +1,36 @@
 #!/bin/bash
-# This script runs QEMU with the specified base image for GNS3 with x86-64 architecture.
-# QCow2 UEFI/GPT Bootable disk image
-# Ubuntu 20.04 LTS Focal Fossa x86-64 Cloud Image
-# Source: https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
-# Default Username: ubuntu
-# Default Password: ubuntu
 
-QEMU_PATH="/usr/bin/qemu-system-x86_64"
-BASE_IMAGE="./image/focal-server-cloudimg-amd64.img" # Ensure this file exists
-RAM_SIZE="4096"
+# Default Extranet Interface is eth0 (Index 0)
+EXTRANET_INDEX=${1:-0}
 
-# For x86_64, we typically don't need the specific ARM UEFI BIOS path or machine type 'virt' in the same way.
-# Standard PC architecture is usually sufficient, or q35.
-MACHINE_TYPE="q35"
+echo "Starting QEMU..."
+echo "Extranet (Internet) assigned to: eth$EXTRANET_INDEX"
+echo "Other interfaces are isolated (Internal only)."
 
-# Check for KVM
-if [ -e /dev/kvm ]; then
-    echo "KVM detected, enabling hardware acceleration."
-    CPU_TYPE="host"
-    ACCEL="-enable-kvm"
-else
-    echo "KVM not detected, falling back to software emulation (TCG)."
-    CPU_TYPE="qemu64"
-    ACCEL=""
-fi
+# Build QEMU arguments
+NET_ARGS=""
+PREFIX_MAC="00:50:43"
+for i in {0..27}; do
+    HEX_ID=$(printf "%02x" $i)
+    if [ "$i" -eq "$EXTRANET_INDEX" ]; then
+        # Unrestricted User Network (NAT/Internet)
+        NET_ARGS="$NET_ARGS -netdev user,id=net$i -device virtio-net-pci,netdev=net$i,mac=${PREFIX_MAC}:12:34:$HEX_ID"
+    else
+        # Restricted User Network (No Internet, just local DHCP)
+        NET_ARGS="$NET_ARGS -netdev user,id=net$i,restrict=y -device virtio-net-pci,netdev=net$i,mac=52:54:00:12:34:$HEX_ID"
+    fi
+done
 
-# Update the QEMU command for x86_64
-QEMU_CMD="$QEMU_PATH -M $MACHINE_TYPE -cpu $CPU_TYPE -m $RAM_SIZE -drive file=$BASE_IMAGE,format=qcow2,if=virtio -net nic,model=virtio -net user -nographic $ACCEL"
-
-# Execute the command
-echo "Executing: $QEMU_CMD"
-exec $QEMU_CMD
+MEMORY_SIZE=1024  # in MB
+IMAGE_PATH="build/gns3_base.qcow2"
+echo "QEMU Network Configuration:"
+for i in {0..27}; do
+    if [ "$i" -eq "$EXTRANET_INDEX" ]; then
+        echo "  eth$i: Unrestricted (Internet access)"
+    else
+        echo "  eth$i: Restricted (No Internet)"
+    fi
+done
+echo "Using disk image: $IMAGE_PATH"
+echo "Allocating memory: ${MEMORY_SIZE}MB"
+qemu-system-x86_64 -m ${MEMORY_SIZE} -hda ${IMAGE_PATH} -nographic $NET_ARGS
