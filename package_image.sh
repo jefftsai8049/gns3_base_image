@@ -16,10 +16,24 @@ fi
 # Script to package Kernel and Rootfs into a bootable QCOW2 image
 # Requires: qemu-img, extlinux (syslinux), losetup, fdisk, mkfs.ext4
 
+ROOT_DIR=$(pwd)
 KERNEL="build/linux/bzImage"
 ROOTFS_CPIO="build/buildroot/buildroot-2019.02.5/output/images/rootfs.cpio"
 OUTPUT="build/gns3_base.qcow2"
 MBR_BIN="/usr/lib/syslinux/mbr/mbr.bin"
+
+# Force repackage buildroot existing rootfs (output/target folder) to cpio
+# Ensure latest rootfs is used
+if [ -d "build/buildroot/buildroot-2019.02.5/output/target" ]; then
+    echo "Packaging latest Buildroot rootfs to cpio..."
+    cd build/buildroot/buildroot-2019.02.5/output/target
+    find . | cpio -o --format=newc > ../images/rootfs.cpio
+    cd $ROOT_DIR
+    echo "Rootfs cpio updated."
+else
+    echo "Buildroot target directory not found, exiting."
+    exit 1
+fi
 
 # Check dependencies
 for cmd in qemu-img extlinux losetup fdisk mkfs.ext4; do
@@ -109,7 +123,7 @@ DEFAULT linux
 LABEL linux
  SAY Booting GNS3 Base Image...
  KERNEL /boot/bzImage
- APPEND root=/dev/sda1 rw console=ttyS0 console=tty1
+ APPEND root=/dev/vda1 rw console=ttyS0 console=tty1
 EOF
 
 echo "Unmounting..."
@@ -137,6 +151,12 @@ IMG_MD5=$(md5sum $OUTPUT | awk '{print $1}')
 IMG_SIZE=$(stat -c%s $OUTPUT)
 GNS3A_FILE="build/gns3_base_image.gns3a"
 
+# Fix ownership if running as root and ORIGINAL_UID is set
+if [ "$(id -u)" -eq 0 ] && [ -n "$ORIGINAL_UID" ]; then
+    echo "Fixing ownership of output files..."
+    chown $ORIGINAL_UID:$ORIGINAL_GID $OUTPUT $GNS3A_FILE
+fi
+
 cat > $GNS3A_FILE <<EOF
 {
     "name": "GNS3 Base Image",
@@ -152,13 +172,13 @@ cat > $GNS3A_FILE <<EOF
     "maintainer_email": "user@example.com",
     "usage": "Import this appliance into GNS3.",
     "first_port_name": "eth0",
-    "port_name_format": "eth{0}",
+    "port_name_format": "eth{port1}",
     "qemu": {
-        "adapter_type": "e1000",
-        "adapters": 1,
+        "adapter_type": "virtio-net-pci",
+        "adapters": 28,
         "ram": 1024,
         "cpus": 2,
-        "hda_disk_interface": "ide",
+        "hda_disk_interface": "virtio",
         "arch": "x86_64",
         "console_type": "telnet",
         "kvm": "require"
