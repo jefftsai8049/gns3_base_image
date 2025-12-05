@@ -145,17 +145,17 @@ echo "Success! Bootable image created at $OUTPUT"
 echo "You can test it with:"
 echo "qemu-system-x86_64 -hda $OUTPUT -nographic"
 
-# Generate .gns3a file for GNS3 registry
-echo "Generating GNS3 appliance file..."
-IMG_MD5=$(md5sum $OUTPUT | awk '{print $1}')
-IMG_SIZE=$(stat -c%s $OUTPUT)
-GNS3A_FILE="build/gns3_base_image.gns3a"
-
 # Fix ownership if running as root and ORIGINAL_UID is set
 if [ "$(id -u)" -eq 0 ] && [ -n "$ORIGINAL_UID" ]; then
     echo "Fixing ownership of output files..."
     chown $ORIGINAL_UID:$ORIGINAL_GID $OUTPUT $GNS3A_FILE
 fi
+
+# Generate .gns3a file for GNS3 registry
+echo "Generating GNS3 appliance file..."
+IMG_MD5=$(md5sum $OUTPUT | awk '{print $1}')
+IMG_SIZE=$(stat -c%s $OUTPUT)
+GNS3A_FILE="build/gns3_base_image.gns3a"
 
 cat > $GNS3A_FILE <<EOF
 {
@@ -205,3 +205,4 @@ cat > $GNS3A_FILE <<EOF
 EOF
 
 echo "GNS3 appliance file created at $GNS3A_FILE"
+echo "GNS3 Base Image packaging complete (md5sum = $IMG_MD5)."
