@@ -112,4 +112,9 @@ echo "SLAN connector configuration file created at: $SLAN_CONFIG_FILE"
 chmod +x $BUILDROOT_ROOTFS_DIR/usr/bin/slan*
 echo "Installation SLAN connector done."
 
+echo "Copy S99local to buildroot rootfs..."
+cp ${ROOT_DIR}/config/rootfs/S99local $BUILDROOT_ROOTFS_DIR/etc/init.d/
+chmod +x $BUILDROOT_ROOTFS_DIR/etc/init.d/S99local
+echo "Copy S99local done."
+
 echo "Build and installation completed successfully."

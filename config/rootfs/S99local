@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Start SLAN TUN/TAP bridges for CPSS simulator
+if [ -x /usr/bin/slanBridge.sh ]; then
+    echo "Starting SLAN TUN/TAP bridges..."
+    /usr/bin/slanBridge.sh &
+fi
+
+exit 0
